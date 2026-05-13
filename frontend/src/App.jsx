@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Activity, Camera, TrendingUp, AlertTriangle, CloudRain, Car } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-const API_ENDPOINT = 'https://xjh5k2hlvi.execute-api.us-east-1.amazonaws.com/traffic'; 
+const API_ENDPOINT = 'https://jx1mq36i2i.execute-api.us-east-1.amazonaws.com/traffic'; 
 
 function App() {
   const [trafficData, setTrafficData] = useState([]);
@@ -57,11 +57,21 @@ function App() {
     return () => clearInterval(interval);
   }, []);
 
-  const totalVehicles = trafficData.reduce((acc, curr) => acc + curr.vehicle_count, 0);
-  const avgSpeed = trafficData.length 
-    ? Math.round(trafficData.reduce((acc, curr) => acc + curr.average_speed_mph, 0) / trafficData.length)
+  // Filter to get only the single most recent reading for each unique camera
+  const latestCameras = [];
+  const seenCameras = new Set();
+  trafficData.forEach(cam => {
+    if (!seenCameras.has(cam.camera_id)) {
+      seenCameras.add(cam.camera_id);
+      latestCameras.push(cam);
+    }
+  });
+
+  const totalVehicles = latestCameras.reduce((acc, curr) => acc + curr.vehicle_count, 0);
+  const avgSpeed = latestCameras.length 
+    ? Math.round(latestCameras.reduce((acc, curr) => acc + curr.average_speed_mph, 0) / latestCameras.length)
     : 0;
-  const highCongestion = trafficData.filter(d => d.congestion_level === 'HIGH').length;
+  const highCongestion = latestCameras.filter(d => d.congestion_level === 'HIGH').length;
 
   return (
     <div className="dashboard-container">
@@ -117,7 +127,7 @@ function App() {
       <h2 style={{ marginBottom: '1.5rem', color: 'var(--text-secondary)' }}>Live Camera Feeds</h2>
       
       <div className="grid-container">
-        {trafficData.map((cam, idx) => (
+        {latestCameras.map((cam, idx) => (
           <div key={cam.camera_id} className={`glass-card delay-${(idx % 4) + 1}`}>
             <div className="card-header">
               <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>

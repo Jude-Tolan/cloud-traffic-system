@@ -5,5 +5,5 @@ variable "region" {
 
 variable "alert_email" {
   description = "Email address to receive traffic alerts"
-  default     = "traffic-admin@example.com"
+  default     = "mrrarjude@gmail.com"
 }
